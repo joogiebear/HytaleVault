@@ -1,0 +1,155 @@
+@CloseButtonStyle = TextButtonStyle(
+  Default: (Background: #2b3542, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #3b4552, LabelStyle: (FontSize: 13, TextColor: #b6c9de, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #1b2532, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+Group {
+  Anchor: (Width: 500, Height: 340);
+  LayoutMode: Left;
+
+  Group #SidePanel {
+    Anchor: (Width: 150);
+    Background: #0a1119(0.95);
+    LayoutMode: Top;
+    Padding: (Full: 16);
+
+    Label {
+      Text: "VAULT INFO";
+      Anchor: (Height: 25);
+      Style: (
+        FontSize: 11,
+        TextColor: #4a5568,
+        RenderUppercase: true,
+        LetterSpacing: 2
+      );
+    }
+
+    Group { Anchor: (Height: 12); }
+
+    Label {
+      Text: "> Overview";
+      Anchor: (Height: 28);
+      Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true);
+    }
+
+    Label {
+      Text: "  Per Vault";
+      Anchor: (Height: 28);
+      Style: (FontSize: 14, TextColor: #6e7da1);
+    }
+  }
+
+  Group #MainPanel {
+    FlexWeight: 1;
+    Background: #141c26(0.98);
+    LayoutMode: Top;
+    Padding: (Full: 20);
+
+    Label {
+      Text: "Vault Overview";
+      Anchor: (Height: 36);
+      Style: (
+        FontSize: 22,
+        TextColor: #ffffff,
+        RenderBold: true
+      );
+    }
+
+    Group {
+      Anchor: (Height: 1);
+      Background: #2b3542;
+    }
+
+    Group { Anchor: (Height: 14); }
+
+    Group #StatsRow {
+      LayoutMode: Left;
+      Anchor: (Height: 70);
+
+      Group {
+        FlexWeight: 1;
+        LayoutMode: Top;
+
+        Label #UnlockedValue {
+          Text: "0";
+          Anchor: (Height: 30);
+          Style: (FontSize: 24, TextColor: #4a9eff, RenderBold: true);
+        }
+        Label {
+          Text: "Unlocked";
+          Anchor: (Height: 18);
+          Style: (FontSize: 11, TextColor: #6e7da1);
+        }
+      }
+
+      Group {
+        FlexWeight: 1;
+        LayoutMode: Top;
+
+        Label #TotalItemsValue {
+          Text: "0";
+          Anchor: (Height: 30);
+          Style: (FontSize: 24, TextColor: #4aff7f, RenderBold: true);
+        }
+        Label {
+          Text: "Items";
+          Anchor: (Height: 18);
+          Style: (FontSize: 11, TextColor: #6e7da1);
+        }
+      }
+
+      Group {
+        FlexWeight: 1;
+        LayoutMode: Top;
+
+        Label #MaxVaultsValue {
+          Text: "9";
+          Anchor: (Height: 30);
+          Style: (FontSize: 24, TextColor: #ffaa4a, RenderBold: true);
+        }
+        Label {
+          Text: "Max";
+          Anchor: (Height: 18);
+          Style: (FontSize: 11, TextColor: #6e7da1);
+        }
+      }
+    }
+
+    Group { Anchor: (Height: 14); }
+
+    Group {
+      Anchor: (Height: 1);
+      Background: #2b3542(0.5);
+    }
+
+    Group { Anchor: (Height: 10); }
+
+    Label {
+      Text: "SLOTS USED";
+      Anchor: (Height: 20);
+      Style: (FontSize: 11, TextColor: #4a5568, LetterSpacing: 2);
+    }
+
+    Group { Anchor: (Height: 6); }
+
+    Label #SlotsInfo {
+      Text: "0 / 0 total slots";
+      Anchor: (Height: 24);
+      Style: (FontSize: 14, TextColor: #96a9be);
+    }
+
+    Group { FlexWeight: 1; }
+
+    Group {
+      LayoutMode: Right;
+      Anchor: (Height: 40);
+
+      TextButton #CloseButton {
+        Text: "CLOSE";
+        Anchor: (Width: 100, Height: 36);
+        Style: @CloseButtonStyle;
+      }
+    }
+  }
+}

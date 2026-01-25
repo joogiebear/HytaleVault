@@ -1,0 +1,143 @@
+$C = "../Common.ui";
+
+@ActionButtonStyle = TextButtonStyle(
+  Default: (Background: #3a7bd5, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@DangerButtonStyle = TextButtonStyle(
+  Default: (Background: #c0392b, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #e74c3c, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #a93226, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@SecondaryButtonStyle = TextButtonStyle(
+  Default: (Background: #2b3542, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #3b4552, LabelStyle: (FontSize: 13, TextColor: #b6c9de, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #1b2532, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+Group {
+  Anchor: (Width: 480, Height: 400);
+  Background: #141c26(0.98);
+  LayoutMode: Top;
+  Padding: (Full: 20);
+
+  Label {
+    Text: "Vault Admin";
+    Anchor: (Height: 40);
+    Style: (
+      FontSize: 22,
+      TextColor: #ffffff,
+      HorizontalAlignment: Center,
+      RenderBold: true
+    );
+  }
+
+  Group {
+    Anchor: (Height: 1);
+    Background: #2b3542;
+  }
+
+  Group { Anchor: (Height: 16); }
+
+  Group {
+    LayoutMode: Left;
+    Anchor: (Height: 44);
+
+    Label {
+      Text: "Player";
+      Anchor: (Width: 100);
+      Style: (FontSize: 14, TextColor: #96a9be, VerticalAlignment: Center);
+    }
+
+    $C.@TextField #PlayerInput {
+      FlexWeight: 1;
+      PlaceholderText: "Enter player name...";
+    }
+  }
+
+  Group { Anchor: (Height: 10); }
+
+  Group {
+    LayoutMode: Left;
+    Anchor: (Height: 44);
+
+    Label {
+      Text: "Vaults";
+      Anchor: (Width: 100);
+      Style: (FontSize: 14, TextColor: #96a9be, VerticalAlignment: Center);
+    }
+
+    $C.@NumberField #VaultsInput {
+      Anchor: (Width: 80);
+      Value: 1;
+    }
+  }
+
+  Group { Anchor: (Height: 20); }
+
+  Group {
+    Anchor: (Height: 1);
+    Background: #2b3542(0.5);
+  }
+
+  Group { Anchor: (Height: 12); }
+
+  Label {
+    Text: "ACTIONS";
+    Anchor: (Height: 20);
+    Style: (FontSize: 11, TextColor: #4a5568, LetterSpacing: 2);
+  }
+
+  Group { Anchor: (Height: 10); }
+
+  Group {
+    LayoutMode: Center;
+    Anchor: (Height: 44);
+
+    TextButton #GiveButton {
+      Text: "GIVE";
+      Anchor: (Width: 100, Height: 38);
+      Style: @ActionButtonStyle;
+    }
+
+    Group { Anchor: (Width: 10); }
+
+    TextButton #SetButton {
+      Text: "SET";
+      Anchor: (Width: 100, Height: 38);
+      Style: @ActionButtonStyle;
+    }
+
+    Group { Anchor: (Width: 10); }
+
+    TextButton #ClearButton {
+      Text: "CLEAR";
+      Anchor: (Width: 100, Height: 38);
+      Style: @DangerButtonStyle;
+    }
+  }
+
+  Group { FlexWeight: 1; }
+
+  Group {
+    LayoutMode: Center;
+    Anchor: (Height: 44);
+
+    TextButton #ReloadButton {
+      Text: "RELOAD CONFIG";
+      Anchor: (Width: 140, Height: 36);
+      Style: @SecondaryButtonStyle;
+    }
+
+    Group { Anchor: (Width: 16); }
+
+    TextButton #CloseButton {
+      Text: "CLOSE";
+      Anchor: (Width: 100, Height: 36);
+      Style: @SecondaryButtonStyle;
+    }
+  }
+}

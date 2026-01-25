@@ -1,0 +1,67 @@
+@ConfirmButtonStyle = TextButtonStyle(
+  Default: (Background: #c0392b, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #e74c3c, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #a93226, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@CancelButtonStyle = TextButtonStyle(
+  Default: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #3b4552, LabelStyle: (FontSize: 14, TextColor: #b6c9de, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #1b2532, LabelStyle: (FontSize: 14, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+Group {
+  Anchor: (Width: 400, Height: 220);
+  Background: #141c26(0.98);
+  LayoutMode: Top;
+  Padding: (Full: 24);
+
+  Label #Headline {
+    Text: "Confirm Clear";
+    Anchor: (Height: 40);
+    Style: (
+      FontSize: 22,
+      TextColor: #ff6b6b,
+      HorizontalAlignment: Center,
+      RenderBold: true
+    );
+  }
+
+  Group {
+    Anchor: (Height: 1);
+    Background: #2b3542;
+  }
+
+  Group { Anchor: (Height: 12); }
+
+  Label #Message {
+    Text: "Clear all vaults for this player?";
+    Anchor: (Height: 45);
+    Style: (
+      FontSize: 14,
+      TextColor: #96a9be,
+      HorizontalAlignment: Center
+    );
+  }
+
+  Group { FlexWeight: 1; }
+
+  Group {
+    LayoutMode: Center;
+    Anchor: (Height: 48);
+
+    TextButton #ConfirmButton {
+      Text: "CLEAR";
+      Anchor: (Width: 120, Height: 40);
+      Style: @ConfirmButtonStyle;
+    }
+
+    Group { Anchor: (Width: 16); }
+
+    TextButton #CancelButton {
+      Text: "CANCEL";
+      Anchor: (Width: 120, Height: 40);
+      Style: @CancelButtonStyle;
+    }
+  }
+}

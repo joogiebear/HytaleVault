@@ -1,0 +1,18 @@
+{
+  "Group": "joogiebear",
+  "Name": "HytaleVault",
+  "Version": "${version}",
+  "Description": "Personal numbered vault storage plugin",
+  "Authors": [
+    {
+      "Name": "joogiebear"
+    }
+  ],
+  "Website": "https://github.com/joogiebear",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "com.joogiebear.hytalevault.HytaleVaultPlugin",
+  "IncludesAssetPack": true
+}
