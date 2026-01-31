@@ -65,6 +65,9 @@ public class VaultCommand extends AbstractCommand {
 
         ConfigManager config = plugin.getConfigManager();
 
+        // Get the max vault this player has permission to access
+        int maxAccessibleVault = plugin.getVaultManager().getMaxAccessibleVault(player);
+
         // Load vault async, then access ECS store on the world thread
         return plugin.getVaultManager().getVault(player).thenAcceptAsync(vault -> {
             Ref<EntityStore> ref = player.getReference();
@@ -74,7 +77,7 @@ public class VaultCommand extends AbstractCommand {
             if (playerRef == null) return;
 
             VaultSelectorPage selectorPage = new VaultSelectorPage(
-                    playerRef, vault, vaultUI, config.getMaxVaults()
+                    playerRef, vault, vaultUI, maxAccessibleVault, plugin.getVaultManager(), player
             );
             player.getPageManager().openCustomPage(ref, store, selectorPage);
         }, world).exceptionally(e -> {

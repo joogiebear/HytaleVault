@@ -16,6 +16,7 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.joogiebear.hytalevault.data.PlayerVault;
+import com.joogiebear.hytalevault.managers.VaultManager;
 import com.joogiebear.hytalevault.util.MessageUtil;
 
 import javax.annotation.Nonnull;
@@ -30,6 +31,8 @@ public class VaultSelectorPage extends InteractiveCustomUIPage<VaultSelectorPage
     private final PlayerVault playerVault;
     private final VaultUI vaultUI;
     private final int maxVaults;
+    private final VaultManager vaultManager;
+    private final Player sourcePlayer;
 
     /**
      * Event data received when a button is clicked.
@@ -50,11 +53,14 @@ public class VaultSelectorPage extends InteractiveCustomUIPage<VaultSelectorPage
     }
 
     public VaultSelectorPage(@Nonnull PlayerRef playerRef, PlayerVault playerVault,
-                             VaultUI vaultUI, int maxVaults) {
+                             VaultUI vaultUI, int maxVaults, VaultManager vaultManager,
+                             Player sourcePlayer) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, VaultSelectData.CODEC);
         this.playerVault = playerVault;
         this.vaultUI = vaultUI;
         this.maxVaults = maxVaults;
+        this.vaultManager = vaultManager;
+        this.sourcePlayer = sourcePlayer;
     }
 
     @Override
@@ -70,7 +76,11 @@ public class VaultSelectorPage extends InteractiveCustomUIPage<VaultSelectorPage
         for (int i = 1; i <= 9; i++) {
             String buttonId = "#Vault" + i;
 
-            if (i <= maxVaults && playerVault.isVaultUnlocked(i)) {
+            // Check both permission AND unlocked status
+            boolean hasPermission = vaultManager.hasVaultPermission(sourcePlayer, i);
+            boolean isUnlocked = playerVault.isVaultUnlocked(i);
+
+            if (i <= maxVaults && hasPermission && isUnlocked) {
                 cmd.set(buttonId + ".Text", "Vault " + i);
             } else {
                 cmd.set(buttonId + ".Text", "Locked");
@@ -116,6 +126,12 @@ public class VaultSelectorPage extends InteractiveCustomUIPage<VaultSelectorPage
 
         // Close the selector first
         player.getPageManager().setPage(ref, store, Page.None);
+
+        // Check permission before opening
+        if (!vaultManager.hasVaultPermission(player, vaultNumber)) {
+            playerRef.sendMessage(MessageUtil.error("You don't have permission to access this vault."));
+            return;
+        }
 
         // Open the vault (openVault handles unlock validation and error messages)
         vaultUI.openVault(player, ref, store, playerRef, playerVault, vaultNumber);

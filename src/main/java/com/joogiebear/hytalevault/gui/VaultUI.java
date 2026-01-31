@@ -38,6 +38,12 @@ public class VaultUI {
                           PlayerRef playerRef, PlayerVault vault, int vaultNumber) {
         ConfigManager config = plugin.getConfigManager();
 
+        // Check permission first
+        if (!plugin.getVaultManager().hasVaultPermission(player, vaultNumber)) {
+            playerRef.sendMessage(MessageUtil.error(config.getMessageNoPermissionRaw()));
+            return;
+        }
+
         if (vaultNumber < 1 || !vault.isVaultUnlocked(vaultNumber)) {
             playerRef.sendMessage(MessageUtil.error(config.getMessageVaultNotUnlockedRaw()));
             return;
