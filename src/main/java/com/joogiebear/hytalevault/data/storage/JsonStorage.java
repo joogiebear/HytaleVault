@@ -52,25 +52,25 @@ public class JsonStorage implements StorageBackend {
     }
 
     @Override
-    public CompletableFuture<PlayerVault> loadVault(UUID playerUuid, int defaultVaults, int slotsPerVault) {
+    public CompletableFuture<PlayerVault> loadVault(UUID playerUuid, int slotsPerVault) {
         return CompletableFuture.supplyAsync(() -> {
             Path filePath = getPlayerFile(playerUuid);
 
             if (!Files.exists(filePath)) {
                 // Create a new vault for this player
-                return new PlayerVault(playerUuid, defaultVaults, slotsPerVault);
+                return new PlayerVault(playerUuid, slotsPerVault);
             }
 
             try {
                 String content = Files.readString(filePath);
                 JsonObject json = JsonParser.parseString(content).getAsJsonObject();
-                return PlayerVault.deserialize(json, defaultVaults, slotsPerVault);
+                return PlayerVault.deserialize(json, slotsPerVault);
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Failed to load vault for " + playerUuid, e);
-                return new PlayerVault(playerUuid, defaultVaults, slotsPerVault);
+                return new PlayerVault(playerUuid, slotsPerVault);
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Failed to parse vault data for " + playerUuid, e);
-                return new PlayerVault(playerUuid, defaultVaults, slotsPerVault);
+                return new PlayerVault(playerUuid, slotsPerVault);
             }
         });
     }

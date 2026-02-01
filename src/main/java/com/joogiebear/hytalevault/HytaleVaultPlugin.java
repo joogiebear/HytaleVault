@@ -14,6 +14,10 @@ import com.joogiebear.hytalevault.gui.VaultUI;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -29,6 +33,9 @@ public class HytaleVaultPlugin extends JavaPlugin {
     private VaultManager vaultManager;
     private StorageBackend storageBackend;
     private VaultCommand vaultCommand;
+    private PlayerListener playerListener;
+    private ScheduledExecutorService autoSaveScheduler;
+    private ScheduledFuture<?> autoSaveTask;
 
     public HytaleVaultPlugin(@Nonnull JavaPluginInit init) {
         super(init);
@@ -39,27 +46,16 @@ public class HytaleVaultPlugin extends JavaPlugin {
     protected void setup() {
         LOGGER.info("HytaleVault is setting up...");
 
-        // Initialize configuration
+        // Load config early - required for command registration (subcommands depend on maxVaults)
+        // This is lightweight config loading, not heavy data loading
         configManager = new ConfigManager(this);
         configManager.loadConfig();
 
-        // Initialize storage backend
-        Path dataPath = getPluginDataPath().resolve(configManager.getStorageDirectory());
-        storageBackend = new JsonStorage(dataPath);
-        storageBackend.initialize();
+        // Register event listeners (must be in setup per Hytale docs)
+        playerListener = new PlayerListener(this);
+        playerListener.register();
 
-        // Initialize vault manager
-        vaultManager = new VaultManager(this, storageBackend);
-    }
-
-    @Override
-    protected void start() {
-        LOGGER.info("HytaleVault is starting...");
-
-        // Register event listeners
-        new PlayerListener(this).register();
-
-        // Register commands using the CommandRegistry
+        // Register commands using the CommandRegistry (must be in setup per Hytale docs)
         vaultCommand = new VaultCommand(this);
         getCommandRegistry().registerCommand(vaultCommand);
         LOGGER.info("Registered /vault command");
@@ -69,13 +65,67 @@ public class HytaleVaultPlugin extends JavaPlugin {
 
         getCommandRegistry().registerCommand(new VaultInfoCommand(this));
         LOGGER.info("Registered /vaultinfo command");
+    }
+
+    @Override
+    protected void start() {
+        LOGGER.info("HytaleVault is starting...");
+
+        // Initialize storage backend
+        Path dataPath = getPluginDataPath().resolve(configManager.getStorageDirectory());
+        storageBackend = new JsonStorage(dataPath);
+        storageBackend.initialize();
+
+        // Initialize vault manager
+        vaultManager = new VaultManager(this, storageBackend);
+
+        // Start auto-save task
+        int saveInterval = configManager.getSaveIntervalSeconds();
+        if (saveInterval > 0) {
+            autoSaveScheduler = Executors.newSingleThreadScheduledExecutor();
+            autoSaveTask = autoSaveScheduler.scheduleAtFixedRate(
+                    this::autoSave,
+                    saveInterval,
+                    saveInterval,
+                    TimeUnit.SECONDS
+            );
+            LOGGER.info("Auto-save scheduled every " + saveInterval + " seconds");
+        }
 
         LOGGER.info("HytaleVault has been enabled!");
+    }
+
+    /**
+     * Periodic auto-save of all loaded vaults.
+     */
+    private void autoSave() {
+        if (vaultManager != null) {
+            vaultManager.saveAll();
+            LOGGER.fine("Auto-save completed");
+        }
     }
 
     @Override
     protected void shutdown() {
         LOGGER.info("HytaleVault is shutting down...");
+
+        // Stop auto-save task first
+        if (autoSaveTask != null) {
+            autoSaveTask.cancel(false);
+        }
+
+        // Shutdown the scheduler properly
+        if (autoSaveScheduler != null) {
+            autoSaveScheduler.shutdown();
+            try {
+                if (!autoSaveScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    autoSaveScheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                autoSaveScheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
 
         // Close all open vault windows (syncs data)
         VaultUI vaultUI = getVaultUI();

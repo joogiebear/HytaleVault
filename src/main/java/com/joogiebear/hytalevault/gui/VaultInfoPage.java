@@ -18,10 +18,12 @@ import javax.annotation.Nonnull;
 
 /**
  * Displays vault statistics for the player in a styled info panel.
+ * Shows accessible vaults based on permissions.
  */
 public class VaultInfoPage extends InteractiveCustomUIPage<VaultInfoPage.InfoCloseData> {
 
     private final PlayerVault playerVault;
+    private final int accessibleVaults;
     private final int maxVaults;
     private final int slotsPerVault;
 
@@ -31,9 +33,10 @@ public class VaultInfoPage extends InteractiveCustomUIPage<VaultInfoPage.InfoClo
     }
 
     public VaultInfoPage(@Nonnull PlayerRef playerRef, PlayerVault playerVault,
-                         int maxVaults, int slotsPerVault) {
+                         int accessibleVaults, int maxVaults, int slotsPerVault) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, InfoCloseData.CODEC);
         this.playerVault = playerVault;
+        this.accessibleVaults = accessibleVaults;
         this.maxVaults = maxVaults;
         this.slotsPerVault = slotsPerVault;
     }
@@ -47,11 +50,10 @@ public class VaultInfoPage extends InteractiveCustomUIPage<VaultInfoPage.InfoClo
     ) {
         cmd.append("Pages/VaultInfo.ui");
 
-        int unlocked = playerVault.getUnlockedVaults();
         int totalItems = playerVault.getTotalItemCount();
-        int totalSlots = unlocked * slotsPerVault;
+        int totalSlots = accessibleVaults * slotsPerVault;
 
-        cmd.set("#UnlockedValue.Text", String.valueOf(unlocked));
+        cmd.set("#UnlockedValue.Text", String.valueOf(accessibleVaults));
         cmd.set("#TotalItemsValue.Text", String.valueOf(totalItems));
         cmd.set("#MaxVaultsValue.Text", String.valueOf(maxVaults));
         cmd.set("#SlotsInfo.Text", totalItems + " / " + totalSlots + " total slots used");

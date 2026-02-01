@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * Manages plugin configuration loading and access.
+ * Vault access is controlled by permissions (LuckPerms).
  */
 public class ConfigManager {
 
@@ -22,7 +23,6 @@ public class ConfigManager {
     private JsonObject config;
 
     // Cached config values
-    private int defaultVaults;
     private int maxVaults;
     private int slotsPerVault;
     private String storageType;
@@ -32,13 +32,10 @@ public class ConfigManager {
     // Messages (raw strings)
     private String messagePrefix;
     private String messageVaultOpened;
-    private String messageVaultUnlocked;
     private String messageNoPermission;
     private String messagePlayerNotFound;
     private String messageInvalidVault;
-    private String messageVaultNotUnlocked;
     private String messageVaultCleared;
-    private String messageVaultsGranted;
     private String messageConfigReloaded;
 
     public ConfigManager(HytaleVaultPlugin plugin) {
@@ -80,7 +77,6 @@ public class ConfigManager {
             String defaultConfig = """
                 {
                   "vault": {
-                    "defaultVaults": 1,
                     "maxVaults": 9,
                     "slotsPerVault": 54
                   },
@@ -92,13 +88,10 @@ public class ConfigManager {
                   "messages": {
                     "prefix": "[HytaleVault] ",
                     "vaultOpened": "Vault #{vault} opened!",
-                    "vaultUnlocked": "Vault #{vault} unlocked!",
-                    "noPermission": "You don't have permission to do that.",
+                    "noPermission": "You don't have permission to access that vault.",
                     "playerNotFound": "Player not found.",
                     "invalidVault": "Invalid vault number.",
-                    "vaultNotUnlocked": "You haven't unlocked that vault yet.",
                     "vaultCleared": "Vault cleared for {player}.",
-                    "vaultsGranted": "Granted {vaults} vaults to {player}.",
                     "configReloaded": "Configuration reloaded."
                   }
                 }
@@ -112,11 +105,9 @@ public class ConfigManager {
     private void parseConfig() {
         JsonObject vault = config.getAsJsonObject("vault");
         if (vault != null) {
-            defaultVaults = getInt(vault, "defaultVaults", getInt(vault, "defaultPages", 1));
             maxVaults = getInt(vault, "maxVaults", getInt(vault, "maxPages", 9));
             slotsPerVault = getInt(vault, "slotsPerVault", getInt(vault, "slotsPerPage", 54));
         } else {
-            defaultVaults = 1;
             maxVaults = 9;
             slotsPerVault = 54;
         }
@@ -136,13 +127,10 @@ public class ConfigManager {
         if (messages != null) {
             messagePrefix = getString(messages, "prefix", "[HytaleVault] ");
             messageVaultOpened = getString(messages, "vaultOpened", "Vault #{vault} opened!");
-            messageVaultUnlocked = getString(messages, "vaultUnlocked", "Vault #{vault} unlocked!");
-            messageNoPermission = getString(messages, "noPermission", "You don't have permission.");
+            messageNoPermission = getString(messages, "noPermission", "You don't have permission to access that vault.");
             messagePlayerNotFound = getString(messages, "playerNotFound", "Player not found.");
             messageInvalidVault = getString(messages, "invalidVault", "Invalid vault number.");
-            messageVaultNotUnlocked = getString(messages, "vaultNotUnlocked", "You haven't unlocked that vault yet.");
             messageVaultCleared = getString(messages, "vaultCleared", "Vault cleared for {player}.");
-            messageVaultsGranted = getString(messages, "vaultsGranted", "Granted {vaults} vaults to {player}.");
             messageConfigReloaded = getString(messages, "configReloaded", "Configuration reloaded.");
         } else {
             loadDefaultMessages();
@@ -150,7 +138,6 @@ public class ConfigManager {
     }
 
     private void loadDefaults() {
-        defaultVaults = 1;
         maxVaults = 9;
         slotsPerVault = 54;
         storageType = "json";
@@ -162,13 +149,10 @@ public class ConfigManager {
     private void loadDefaultMessages() {
         messagePrefix = "[HytaleVault] ";
         messageVaultOpened = "Vault #{vault} opened!";
-        messageVaultUnlocked = "Vault #{vault} unlocked!";
-        messageNoPermission = "You don't have permission.";
+        messageNoPermission = "You don't have permission to access that vault.";
         messagePlayerNotFound = "Player not found.";
         messageInvalidVault = "Invalid vault number.";
-        messageVaultNotUnlocked = "You haven't unlocked that vault yet.";
         messageVaultCleared = "Vault cleared for {player}.";
-        messageVaultsGranted = "Granted {vaults} vaults to {player}.";
         messageConfigReloaded = "Configuration reloaded.";
     }
 
@@ -181,7 +165,6 @@ public class ConfigManager {
     }
 
     // Getters for config values
-    public int getDefaultVaults() { return defaultVaults; }
     public int getMaxVaults() { return maxVaults; }
     public int getSlotsPerVault() { return slotsPerVault; }
     public String getStorageType() { return storageType; }
@@ -192,11 +175,8 @@ public class ConfigManager {
     public String getMessageNoPermissionRaw() { return messageNoPermission; }
     public String getMessagePlayerNotFoundRaw() { return messagePlayerNotFound; }
     public String getMessageInvalidVaultRaw() { return messageInvalidVault; }
-    public String getMessageVaultNotUnlockedRaw() { return messageVaultNotUnlocked; }
     public String getMessageVaultOpenedRaw() { return messageVaultOpened; }
-    public String getMessageVaultUnlockedRaw() { return messageVaultUnlocked; }
     public String getMessageVaultClearedRaw() { return messageVaultCleared; }
-    public String getMessageVaultsGrantedRaw() { return messageVaultsGranted; }
     public String getMessageConfigReloadedRaw() { return messageConfigReloaded; }
 
     public String formatMessage(String message, String... replacements) {

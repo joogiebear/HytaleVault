@@ -11,6 +11,9 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Public API for HytaleVault.
+ *
+ * Vault access is controlled by permissions (LuckPerms).
+ * Use hasVaultPermission() to check if a player can access a vault.
  */
 public class VaultAPI {
 
@@ -36,33 +39,45 @@ public class VaultAPI {
         return HytaleVaultPlugin.getInstance().getVaultManager().getVault(playerUuid);
     }
 
-    public CompletableFuture<Integer> getUnlockedVaults(UUID playerUuid) {
-        return getVault(playerUuid).thenApply(PlayerVault::getUnlockedVaults);
+    /**
+     * Check if a player has permission to access a specific vault.
+     * Permissions are tiered: hytalevault.vault.3 grants access to vaults 1-3.
+     *
+     * @param player      The player to check
+     * @param vaultNumber The vault number (1-indexed)
+     * @return true if the player has permission
+     */
+    public boolean hasVaultPermission(Player player, int vaultNumber) {
+        return HytaleVaultPlugin.getInstance().getVaultManager().hasVaultPermission(player, vaultNumber);
     }
 
-    public CompletableFuture<Integer> grantVaults(UUID playerUuid, int count) {
-        return HytaleVaultPlugin.getInstance().getVaultManager().grantVaults(playerUuid, count);
+    /**
+     * Get the maximum vault a player has access to based on permissions.
+     *
+     * @param player The player to check
+     * @return The highest vault number the player can access
+     */
+    public int getMaxAccessibleVault(Player player) {
+        return HytaleVaultPlugin.getInstance().getVaultManager().getMaxAccessibleVault(player);
     }
 
     public CompletableFuture<ItemStack> getItem(UUID playerUuid, int vaultNumber, int slot) {
+        int slotsPerVault = getSlotsPerVault();
         return getVault(playerUuid).thenApply(vault -> {
-            VaultPage vaultData = vault.getVault(vaultNumber);
+            VaultPage vaultData = vault.getOrCreateVault(vaultNumber, slotsPerVault);
             return vaultData != null ? vaultData.getItem(slot) : null;
         });
     }
 
     public CompletableFuture<Boolean> setItem(UUID playerUuid, int vaultNumber, int slot, ItemStack item) {
+        int slotsPerVault = getSlotsPerVault();
         return getVault(playerUuid).thenApply(vault -> {
-            VaultPage vaultData = vault.getVault(vaultNumber);
+            VaultPage vaultData = vault.getOrCreateVault(vaultNumber, slotsPerVault);
             if (vaultData == null) return false;
             vaultData.setItem(slot, item);
             vault.markDirty();
             return true;
         });
-    }
-
-    public CompletableFuture<Boolean> isVaultUnlocked(UUID playerUuid, int vaultNumber) {
-        return getVault(playerUuid).thenApply(vault -> vault.isVaultUnlocked(vaultNumber));
     }
 
     public CompletableFuture<Integer> getTotalItems(UUID playerUuid) {

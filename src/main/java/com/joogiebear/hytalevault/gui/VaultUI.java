@@ -15,18 +15,19 @@ import com.joogiebear.hytalevault.data.VaultPage;
 import com.joogiebear.hytalevault.managers.ConfigManager;
 import com.joogiebear.hytalevault.util.MessageUtil;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
  * Manages the vault GUI for players using Hytale's Windows System.
+ * Uses real-time syncing to ensure items are saved even if the menu is closed quickly.
  */
 public class VaultUI {
 
     private static final Logger LOGGER = Logger.getLogger("HytaleVault");
-    private static final Map<UUID, VaultSession> openSessions = new HashMap<>();
+    private static final Map<UUID, VaultSession> openSessions = new ConcurrentHashMap<>();
 
     private final HytaleVaultPlugin plugin;
 
@@ -38,18 +39,20 @@ public class VaultUI {
                           PlayerRef playerRef, PlayerVault vault, int vaultNumber) {
         ConfigManager config = plugin.getConfigManager();
 
-        // Check permission first
+        // Permission-only check
         if (!plugin.getVaultManager().hasVaultPermission(player, vaultNumber)) {
             playerRef.sendMessage(MessageUtil.error(config.getMessageNoPermissionRaw()));
             return;
         }
 
-        if (vaultNumber < 1 || !vault.isVaultUnlocked(vaultNumber)) {
-            playerRef.sendMessage(MessageUtil.error(config.getMessageVaultNotUnlockedRaw()));
+        if (vaultNumber < 1 || vaultNumber > config.getMaxVaults()) {
+            playerRef.sendMessage(MessageUtil.error(config.getMessageInvalidVaultRaw()));
             return;
         }
 
-        VaultPage vaultData = vault.getVault(vaultNumber);
+        // Get or create vault data (auto-create if player has permission)
+        int slotsPerVault = config.getSlotsPerVault();
+        VaultPage vaultData = vault.getOrCreateVault(vaultNumber, slotsPerVault);
         if (vaultData == null) {
             playerRef.sendMessage(MessageUtil.error(config.getMessageInvalidVaultRaw()));
             return;
@@ -61,7 +64,6 @@ public class VaultUI {
         }
 
         // Create container with all slots as storage
-        int slotsPerVault = config.getSlotsPerVault();
         VaultContainer container = new VaultContainer((short) slotsPerVault);
 
         // Load items from vault into container
@@ -73,6 +75,17 @@ public class VaultUI {
                 container.internal_setSlot((short) slot, item);
             }
         }
+
+        // Set up real-time sync listener AFTER loading initial items
+        container.setChangeListener((slot, item) -> {
+            // Sync this slot change directly to vault data
+            if (item == null || item.isEmpty()) {
+                vaultData.clearSlot(slot);
+            } else {
+                vaultData.setItem(slot, item);
+            }
+            vault.markDirty();
+        });
 
         // Wrap in ContainerWindow and open via PageManager
         ContainerWindow containerWindow = new ContainerWindow(container);
@@ -96,7 +109,7 @@ public class VaultUI {
         if (playerRef != null) {
             VaultSession session = openSessions.remove(playerRef.getUuid());
             if (session != null) {
-                syncContainerToVault(session);
+                // Real-time sync already happened, just save to disk
                 plugin.getVaultManager().saveVault(session.vault).join();
                 LOGGER.info("Saved vault for " + playerRef.getUuid());
             }
@@ -109,32 +122,16 @@ public class VaultUI {
     private void syncAndRemoveSession(UUID playerUuid) {
         VaultSession session = openSessions.remove(playerUuid);
         if (session != null) {
-            syncContainerToVault(session);
+            // Real-time sync already happened, just save to disk
             plugin.getVaultManager().saveVault(session.vault).join();
         }
     }
 
     /**
-     * Sync the container slots back to the vault data.
+     * Close a vault by player UUID (used when Player object is not available).
      */
-    private void syncContainerToVault(VaultSession session) {
-        if (session.container == null || session.vault == null) return;
-
-        VaultPage vaultData = session.vault.getVault(session.currentVault);
-        if (vaultData == null) return;
-
-        vaultData.clear();
-
-        short capacity = session.container.getCapacity();
-        for (short i = 0; i < capacity; i++) {
-            ItemStack item = session.container.internal_getSlot(i);
-            if (item != null && !item.isEmpty()) {
-                vaultData.setItem(i, item);
-            }
-        }
-
-        session.vault.markDirty();
-        LOGGER.info("Synced container to vault #" + session.currentVault);
+    public void closeVaultByUuid(UUID playerUuid) {
+        syncAndRemoveSession(playerUuid);
     }
 
     public boolean isVaultOpen(UUID playerUuid) {
@@ -148,7 +145,6 @@ public class VaultUI {
     public void closeAll() {
         // Save all open vaults before clearing
         for (VaultSession session : openSessions.values()) {
-            syncContainerToVault(session);
             plugin.getVaultManager().saveVault(session.vault).join();
         }
         openSessions.clear();

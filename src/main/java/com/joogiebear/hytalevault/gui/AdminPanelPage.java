@@ -22,8 +22,11 @@ import javax.annotation.Nonnull;
 import java.util.logging.Logger;
 
 /**
- * Admin panel UI with form inputs for managing player vaults.
- * Provides Give, Set, Clear, and Reload actions via interactive buttons.
+ * Admin panel UI for managing player vaults.
+ * Provides Clear and Reload actions via interactive buttons.
+ *
+ * Note: Vault access is controlled by permissions (LuckPerms).
+ * Use LuckPerms to grant vault access: lp user <player> permission set hytalevault.vault.<number>
  */
 public class AdminPanelPage extends InteractiveCustomUIPage<AdminPanelPage.AdminEventData> {
 
@@ -32,12 +35,10 @@ public class AdminPanelPage extends InteractiveCustomUIPage<AdminPanelPage.Admin
 
     /**
      * Event data from the admin panel form.
-     * Captures the action, player name input, and vault count input.
      */
     public static class AdminEventData {
         public String action;
         public String playerName;
-        public int vaultCount;
 
         public static final BuilderCodec<AdminEventData> CODEC = BuilderCodec
                 .builder(AdminEventData.class, AdminEventData::new)
@@ -48,10 +49,6 @@ public class AdminPanelPage extends InteractiveCustomUIPage<AdminPanelPage.Admin
                 .append(new KeyedCodec<>("@PlayerName", Codec.STRING),
                         (AdminEventData o, String v) -> o.playerName = v,
                         (AdminEventData o) -> o.playerName)
-                .add()
-                .append(new KeyedCodec<>("@VaultCount", Codec.INTEGER),
-                        (AdminEventData o, Integer v) -> o.vaultCount = v != null ? v : 1,
-                        (AdminEventData o) -> o.vaultCount)
                 .add()
                 .build();
     }
@@ -70,17 +67,7 @@ public class AdminPanelPage extends InteractiveCustomUIPage<AdminPanelPage.Admin
     ) {
         cmd.append("Pages/AdminPanel.ui");
 
-        // Bind action buttons with form input values
-        evt.addEventBinding(CustomUIEventBindingType.Activating, "#GiveButton",
-                new EventData().append("Action", "Give")
-                        .append("@PlayerName", "#PlayerInput.Value")
-                        .append("@VaultCount", "#VaultsInput.Value"));
-
-        evt.addEventBinding(CustomUIEventBindingType.Activating, "#SetButton",
-                new EventData().append("Action", "Set")
-                        .append("@PlayerName", "#PlayerInput.Value")
-                        .append("@VaultCount", "#VaultsInput.Value"));
-
+        // Bind action buttons
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#ClearButton",
                 new EventData().append("Action", "Clear")
                         .append("@PlayerName", "#PlayerInput.Value"));
@@ -109,62 +96,10 @@ public class AdminPanelPage extends InteractiveCustomUIPage<AdminPanelPage.Admin
                 playerRef.sendMessage(MessageUtil.success("Configuration reloaded."));
                 player.getPageManager().setPage(ref, store, Page.None);
             }
-            case "Give" -> {
-                handleGive(player, ref, store, data);
-            }
-            case "Set" -> {
-                handleSet(player, ref, store, data);
-            }
             case "Clear" -> {
                 handleClear(player, ref, store, data);
             }
         }
-    }
-
-    private void handleGive(Player player, Ref<EntityStore> ref, Store<EntityStore> store, AdminEventData data) {
-        if (data.playerName == null || data.playerName.isBlank()) {
-            playerRef.sendMessage(MessageUtil.error("Enter a player name."));
-            return;
-        }
-
-        if (data.vaultCount < 1) {
-            playerRef.sendMessage(MessageUtil.error("Vault count must be at least 1."));
-            return;
-        }
-
-        PlayerRef targetRef = findPlayer(player, data.playerName);
-        if (targetRef == null) {
-            playerRef.sendMessage(MessageUtil.error("Player not found: " + data.playerName));
-            return;
-        }
-
-        player.getPageManager().setPage(ref, store, Page.None);
-        plugin.getVaultManager().grantVaults(targetRef.getUuid(), data.vaultCount).thenAccept(newTotal -> {
-            playerRef.sendMessage(MessageUtil.success("Granted " + data.vaultCount + " vaults to " + targetRef.getUsername()));
-        });
-    }
-
-    private void handleSet(Player player, Ref<EntityStore> ref, Store<EntityStore> store, AdminEventData data) {
-        if (data.playerName == null || data.playerName.isBlank()) {
-            playerRef.sendMessage(MessageUtil.error("Enter a player name."));
-            return;
-        }
-
-        if (data.vaultCount < 1 || data.vaultCount > plugin.getConfigManager().getMaxVaults()) {
-            playerRef.sendMessage(MessageUtil.error("Vaults must be between 1 and " + plugin.getConfigManager().getMaxVaults()));
-            return;
-        }
-
-        PlayerRef targetRef = findPlayer(player, data.playerName);
-        if (targetRef == null) {
-            playerRef.sendMessage(MessageUtil.error("Player not found: " + data.playerName));
-            return;
-        }
-
-        player.getPageManager().setPage(ref, store, Page.None);
-        plugin.getVaultManager().setVaults(targetRef.getUuid(), data.vaultCount).thenRun(() -> {
-            playerRef.sendMessage(MessageUtil.success("Set " + targetRef.getUsername() + "'s vaults to " + data.vaultCount));
-        });
     }
 
     private void handleClear(Player player, Ref<EntityStore> ref, Store<EntityStore> store, AdminEventData data) {

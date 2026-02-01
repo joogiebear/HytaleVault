@@ -141,10 +141,6 @@ public class VaultCommand extends AbstractCommand {
 
                 if (playerRef == null) return;
 
-                if (!vault.isVaultUnlocked(vaultNumber)) {
-                    playerRef.sendMessage(MessageUtil.error(config.getMessageVaultNotUnlockedRaw()));
-                    return;
-                }
                 vaultUI.openVault(player, ref, store, playerRef, vault, vaultNumber);
             }, world).exceptionally(e -> {
                 ctx.sendMessage(MessageUtil.error("Failed to load vault. Please try again."));

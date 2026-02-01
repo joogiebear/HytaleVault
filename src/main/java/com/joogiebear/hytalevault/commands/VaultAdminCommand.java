@@ -12,7 +12,6 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.joogiebear.hytalevault.HytaleVaultPlugin;
 import com.joogiebear.hytalevault.gui.AdminPanelPage;
-import com.joogiebear.hytalevault.managers.ConfigManager;
 import com.joogiebear.hytalevault.util.MessageUtil;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,6 +20,9 @@ import java.util.logging.Logger;
 /**
  * Admin command for vault management.
  * Usage: /vaultadmin <subcommand> [args]
+ *
+ * Note: Vault access is controlled by permissions (LuckPerms).
+ * Use LuckPerms to grant vault access: lp user <player> permission set hytalevault.vault.<number>
  */
 public class VaultAdminCommand extends AbstractCommand {
 
@@ -36,8 +38,6 @@ public class VaultAdminCommand extends AbstractCommand {
         requirePermission("hytalevault.admin");
 
         // Add subcommands
-        addSubCommand(new GiveSubCommand(plugin));
-        addSubCommand(new SetSubCommand(plugin));
         addSubCommand(new ClearSubCommand(plugin));
         addSubCommand(new ReloadSubCommand(plugin));
     }
@@ -66,81 +66,13 @@ public class VaultAdminCommand extends AbstractCommand {
 
         // Console fallback: show text help
         ctx.sendMessage(MessageUtil.info("HytaleVault Admin Commands:"));
-        ctx.sendMessage(MessageUtil.of("/vaultadmin give <player> <vaults> - Grant vaults"));
-        ctx.sendMessage(MessageUtil.of("/vaultadmin set <player> <vaults> - Set vault count"));
         ctx.sendMessage(MessageUtil.of("/vaultadmin clear <player> - Clear a player's vaults"));
         ctx.sendMessage(MessageUtil.of("/vaultadmin reload - Reload configuration"));
+        ctx.sendMessage(MessageUtil.of(""));
+        ctx.sendMessage(MessageUtil.info("Vault access is controlled by permissions:"));
+        ctx.sendMessage(MessageUtil.of("  lp user <player> permission set hytalevault.vault.<number>"));
+        ctx.sendMessage(MessageUtil.of("  Example: hytalevault.vault.3 grants vaults 1-3"));
         return CompletableFuture.completedFuture(null);
-    }
-
-    // Subcommand: give
-    private static class GiveSubCommand extends AbstractCommand {
-        private final HytaleVaultPlugin plugin;
-        private final RequiredArg<PlayerRef> playerArg;
-        private final RequiredArg<Integer> vaultsArg;
-
-        public GiveSubCommand(HytaleVaultPlugin plugin) {
-            super("give", "Grant vaults to a player");
-            this.plugin = plugin;
-            this.playerArg = withRequiredArg("player", "Player to give vaults to", ArgTypes.PLAYER_REF);
-            this.vaultsArg = withRequiredArg("vaults", "Number of vaults to grant", ArgTypes.INTEGER);
-        }
-
-        @Override
-        protected CompletableFuture<Void> execute(CommandContext ctx) {
-            PlayerRef targetRef = ctx.get(playerArg);
-            int vaults = ctx.get(vaultsArg);
-
-            if (targetRef == null) {
-                ctx.sendMessage(MessageUtil.error(plugin.getConfigManager().getMessagePlayerNotFoundRaw()));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            if (vaults < 1) {
-                ctx.sendMessage(MessageUtil.error("Vaults must be at least 1."));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            return plugin.getVaultManager().grantVaults(targetRef.getUuid(), vaults).thenAccept(newTotal -> {
-                ctx.sendMessage(MessageUtil.success("Granted " + vaults + " vaults to " + targetRef.getUsername()));
-                targetRef.sendMessage(MessageUtil.success("You now have " + newTotal + " vaults!"));
-            });
-        }
-    }
-
-    // Subcommand: set
-    private static class SetSubCommand extends AbstractCommand {
-        private final HytaleVaultPlugin plugin;
-        private final RequiredArg<PlayerRef> playerArg;
-        private final RequiredArg<Integer> vaultsArg;
-
-        public SetSubCommand(HytaleVaultPlugin plugin) {
-            super("set", "Set a player's vault count");
-            this.plugin = plugin;
-            this.playerArg = withRequiredArg("player", "Player to modify", ArgTypes.PLAYER_REF);
-            this.vaultsArg = withRequiredArg("vaults", "Number of vaults to set", ArgTypes.INTEGER);
-        }
-
-        @Override
-        protected CompletableFuture<Void> execute(CommandContext ctx) {
-            ConfigManager config = plugin.getConfigManager();
-            PlayerRef targetRef = ctx.get(playerArg);
-            int vaults = ctx.get(vaultsArg);
-
-            if (targetRef == null) {
-                ctx.sendMessage(MessageUtil.error(config.getMessagePlayerNotFoundRaw()));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            if (vaults < 1 || vaults > config.getMaxVaults()) {
-                ctx.sendMessage(MessageUtil.error("Vaults must be between 1 and " + config.getMaxVaults()));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            return plugin.getVaultManager().setVaults(targetRef.getUuid(), vaults).thenRun(() -> {
-                ctx.sendMessage(MessageUtil.success("Set " + targetRef.getUsername() + "'s vaults to " + vaults + "."));
-            });
-        }
     }
 
     // Subcommand: clear

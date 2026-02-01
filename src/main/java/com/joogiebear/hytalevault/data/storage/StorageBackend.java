@@ -15,11 +15,10 @@ public interface StorageBackend {
      * Load a player's vault from storage.
      *
      * @param playerUuid    The player's UUID
-     * @param defaultVaults Default number of vaults for new players
      * @param slotsPerVault Slots per vault
      * @return A future containing the loaded vault, or a new vault if none exists
      */
-    CompletableFuture<PlayerVault> loadVault(UUID playerUuid, int defaultVaults, int slotsPerVault);
+    CompletableFuture<PlayerVault> loadVault(UUID playerUuid, int slotsPerVault);
 
     /**
      * Save a player's vault to storage.

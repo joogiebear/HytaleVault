@@ -15,12 +15,14 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Custom ItemContainer for vault storage.
  * All slots are usable storage slots.
+ * Supports a change listener for real-time syncing.
  */
 public class VaultContainer extends ItemContainer {
 
@@ -30,6 +32,7 @@ public class VaultContainer extends ItemContainer {
 
     private short _capacity;
     private ItemStack[] _slots;
+    private BiConsumer<Short, ItemStack> changeListener;
 
     public VaultContainer(short capacity) {
         this._capacity = capacity;
@@ -38,6 +41,14 @@ public class VaultContainer extends ItemContainer {
 
     protected VaultContainer() {
         // For CODEC/singleton
+    }
+
+    /**
+     * Set a listener that gets called whenever a slot changes.
+     * @param listener Called with (slotIndex, newItemStack) on every change
+     */
+    public void setChangeListener(BiConsumer<Short, ItemStack> listener) {
+        this.changeListener = listener;
     }
 
     @Override
@@ -95,6 +106,12 @@ public class VaultContainer extends ItemContainer {
         validateSlotIndex(slot, _capacity);
         ItemStack prev = _slots[slot];
         _slots[slot] = itemStack;
+
+        // Notify listener of change for real-time sync
+        if (changeListener != null) {
+            changeListener.accept(slot, itemStack);
+        }
+
         return prev;
     }
 
@@ -103,6 +120,12 @@ public class VaultContainer extends ItemContainer {
         validateSlotIndex(slot, _capacity);
         ItemStack prev = _slots[slot];
         _slots[slot] = null;
+
+        // Notify listener of removal
+        if (changeListener != null) {
+            changeListener.accept(slot, null);
+        }
+
         return prev;
     }
 

@@ -76,11 +76,10 @@ public class VaultSelectorPage extends InteractiveCustomUIPage<VaultSelectorPage
         for (int i = 1; i <= 9; i++) {
             String buttonId = "#Vault" + i;
 
-            // Check both permission AND unlocked status
+            // Permission-only: if player has permission, vault is accessible
             boolean hasPermission = vaultManager.hasVaultPermission(sourcePlayer, i);
-            boolean isUnlocked = playerVault.isVaultUnlocked(i);
 
-            if (i <= maxVaults && hasPermission && isUnlocked) {
+            if (i <= maxVaults && hasPermission) {
                 cmd.set(buttonId + ".Text", "Vault " + i);
             } else {
                 cmd.set(buttonId + ".Text", "Locked");

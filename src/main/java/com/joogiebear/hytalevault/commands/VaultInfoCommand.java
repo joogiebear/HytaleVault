@@ -50,6 +50,7 @@ public class VaultInfoCommand extends AbstractCommand {
         }
 
         ConfigManager config = plugin.getConfigManager();
+        int accessibleVaults = plugin.getVaultManager().getMaxAccessibleVault(player);
 
         return plugin.getVaultManager().getVault(player).thenAcceptAsync(vault -> {
             Ref<EntityStore> ref = player.getReference();
@@ -59,7 +60,7 @@ public class VaultInfoCommand extends AbstractCommand {
             if (playerRef == null) return;
 
             VaultInfoPage infoPage = new VaultInfoPage(
-                    playerRef, vault, config.getMaxVaults(), config.getSlotsPerVault()
+                    playerRef, vault, accessibleVaults, config.getMaxVaults(), config.getSlotsPerVault()
             );
             player.getPageManager().openCustomPage(ref, store, infoPage);
         }, world).exceptionally(e -> {

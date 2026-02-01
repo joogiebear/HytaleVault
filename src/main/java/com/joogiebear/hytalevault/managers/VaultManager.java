@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * Manages player vault operations including loading, saving, and caching.
+ * Vault access is controlled by permissions, not unlock counts.
  */
 public class VaultManager {
 
@@ -39,7 +40,7 @@ public class VaultManager {
         }
 
         ConfigManager config = plugin.getConfigManager();
-        return storage.loadVault(playerUuid, config.getDefaultVaults(), config.getSlotsPerVault())
+        return storage.loadVault(playerUuid, config.getSlotsPerVault())
                 .thenApply(vault -> {
                     vaultCache.put(playerUuid, vault);
                     return vault;
@@ -87,22 +88,6 @@ public class VaultManager {
         LOGGER.info("All vaults saved.");
     }
 
-    public CompletableFuture<Integer> grantVaults(UUID playerUuid, int count) {
-        return getVault(playerUuid).thenCompose(vault -> {
-            ConfigManager config = plugin.getConfigManager();
-            int unlocked = vault.unlockVaults(count, config.getMaxVaults());
-            return storage.saveVault(vault).thenApply(v -> unlocked);
-        });
-    }
-
-    public CompletableFuture<Void> setVaults(UUID playerUuid, int count) {
-        return getVault(playerUuid).thenCompose(vault -> {
-            ConfigManager config = plugin.getConfigManager();
-            vault.setUnlockedVaults(count, config.getMaxVaults());
-            return storage.saveVault(vault);
-        });
-    }
-
     public CompletableFuture<Void> clearVault(UUID playerUuid) {
         return getVault(playerUuid).thenCompose(vault -> {
             vault.clearAll();
@@ -115,9 +100,22 @@ public class VaultManager {
         if (vaultNumber == 1) {
             return player.hasPermission("hytalevault.vault.1", true);
         }
-        // Higher vaults require specific permissions (default false)
-        return player.hasPermission("hytalevault.vault." + vaultNumber, false)
-                || player.hasPermission("hytalevault.vault.*", false);
+
+        // Check wildcard first
+        if (player.hasPermission("hytalevault.vault.*")) {
+            return true;
+        }
+
+        // Tiered permissions: vault.5 grants access to vaults 1-5
+        // So for vault N, check if player has permission for any vault >= N
+        ConfigManager config = plugin.getConfigManager();
+        for (int i = vaultNumber; i <= config.getMaxVaults(); i++) {
+            if (player.hasPermission("hytalevault.vault." + i)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public int getMaxAccessibleVault(Player player) {
@@ -127,14 +125,13 @@ public class VaultManager {
             return config.getMaxVaults();
         }
 
-        int maxVault = 1;
-        for (int i = 2; i <= config.getMaxVaults(); i++) {
+        // Find the highest vault permission (tiered system)
+        for (int i = config.getMaxVaults(); i >= 2; i--) {
             if (player.hasPermission("hytalevault.vault." + i)) {
-                maxVault = i;
+                return i;
             }
         }
-
-        return maxVault;
+        return 1;
     }
 
     public void shutdown() {

@@ -1,6 +1,5 @@
 {
   "vault": {
-    "defaultVaults": 1,
     "maxVaults": 9,
     "slotsPerVault": 54
   },
@@ -12,13 +11,10 @@
   "messages": {
     "prefix": "&7[&6HytaleVault&7] ",
     "vaultOpened": "&aVault #{vault} opened!",
-    "vaultUnlocked": "&aVault #{vault} unlocked!",
-    "noPermission": "&cYou don't have permission to do that.",
+    "noPermission": "&cYou don't have permission to access that vault.",
     "playerNotFound": "&cPlayer not found.",
     "invalidVault": "&cInvalid vault number.",
-    "vaultNotUnlocked": "&cYou haven't unlocked that vault yet.",
     "vaultCleared": "&aVault cleared for {player}.",
-    "vaultsGranted": "&aGranted {vaults} vaults to {player}.",
     "configReloaded": "&aConfiguration reloaded."
   }
 }
