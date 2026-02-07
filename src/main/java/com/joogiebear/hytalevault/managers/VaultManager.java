@@ -118,6 +118,25 @@ public class VaultManager {
         return false;
     }
 
+    /**
+     * Get the number of vault slots a player is allowed based on slot tier permissions.
+     * If no slot tiers are configured, returns the global slotsPerVault value.
+     */
+    public int getSlotsForPlayer(Player player) {
+        ConfigManager config = plugin.getConfigManager();
+        Map<String, Integer> tiers = config.getSlotTiers();
+        if (tiers.isEmpty()) {
+            return config.getSlotsPerVault();
+        }
+        int maxSlots = 0;
+        for (Map.Entry<String, Integer> entry : tiers.entrySet()) {
+            if (player.hasPermission(entry.getKey()) && entry.getValue() > maxSlots) {
+                maxSlots = entry.getValue();
+            }
+        }
+        return maxSlots > 0 ? maxSlots : config.getSlotsPerVault();
+    }
+
     public int getMaxAccessibleVault(Player player) {
         ConfigManager config = plugin.getConfigManager();
 

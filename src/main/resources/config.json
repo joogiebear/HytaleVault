@@ -1,7 +1,9 @@
 {
   "vault": {
     "maxVaults": 9,
-    "slotsPerVault": 54
+    "slotsPerVault": 54,
+    "blacklist": [],
+    "slotTiers": {}
   },
   "storage": {
     "type": "json",
@@ -15,6 +17,7 @@
     "playerNotFound": "&cPlayer not found.",
     "invalidVault": "&cInvalid vault number.",
     "vaultCleared": "&aVault cleared for {player}.",
-    "configReloaded": "&aConfiguration reloaded."
+    "configReloaded": "&aConfiguration reloaded.",
+    "itemBlacklisted": "&cThat item cannot be stored in vaults."
   }
 }

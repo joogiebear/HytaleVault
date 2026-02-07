@@ -4,10 +4,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.joogiebear.hytalevault.HytaleVaultPlugin;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,6 +29,8 @@ public class ConfigManager {
     // Cached config values
     private int maxVaults;
     private int slotsPerVault;
+    private Set<String> blacklistedItems;
+    private Map<String, Integer> slotTiers;
     private String storageType;
     private String storageDirectory;
     private int saveIntervalSeconds;
@@ -37,6 +43,7 @@ public class ConfigManager {
     private String messageInvalidVault;
     private String messageVaultCleared;
     private String messageConfigReloaded;
+    private String messageItemBlacklisted;
 
     public ConfigManager(HytaleVaultPlugin plugin) {
         this.plugin = plugin;
@@ -78,7 +85,9 @@ public class ConfigManager {
                 {
                   "vault": {
                     "maxVaults": 9,
-                    "slotsPerVault": 54
+                    "slotsPerVault": 54,
+                    "blacklist": [],
+                    "slotTiers": {}
                   },
                   "storage": {
                     "type": "json",
@@ -92,7 +101,8 @@ public class ConfigManager {
                     "playerNotFound": "Player not found.",
                     "invalidVault": "Invalid vault number.",
                     "vaultCleared": "Vault cleared for {player}.",
-                    "configReloaded": "Configuration reloaded."
+                    "configReloaded": "Configuration reloaded.",
+                    "itemBlacklisted": "That item cannot be stored in vaults."
                   }
                 }
                 """;
@@ -107,9 +117,29 @@ public class ConfigManager {
         if (vault != null) {
             maxVaults = getInt(vault, "maxVaults", getInt(vault, "maxPages", 9));
             slotsPerVault = getInt(vault, "slotsPerVault", getInt(vault, "slotsPerPage", 54));
+
+            // Parse blacklist
+            blacklistedItems = new HashSet<>();
+            if (vault.has("blacklist")) {
+                JsonArray blacklistArray = vault.getAsJsonArray("blacklist");
+                for (JsonElement element : blacklistArray) {
+                    blacklistedItems.add(element.getAsString());
+                }
+            }
+
+            // Parse slot tiers
+            slotTiers = new LinkedHashMap<>();
+            if (vault.has("slotTiers")) {
+                JsonObject tiersObj = vault.getAsJsonObject("slotTiers");
+                for (Map.Entry<String, JsonElement> entry : tiersObj.entrySet()) {
+                    slotTiers.put(entry.getKey(), entry.getValue().getAsInt());
+                }
+            }
         } else {
             maxVaults = 9;
             slotsPerVault = 54;
+            blacklistedItems = new HashSet<>();
+            slotTiers = new LinkedHashMap<>();
         }
 
         JsonObject storage = config.getAsJsonObject("storage");
@@ -132,6 +162,7 @@ public class ConfigManager {
             messageInvalidVault = getString(messages, "invalidVault", "Invalid vault number.");
             messageVaultCleared = getString(messages, "vaultCleared", "Vault cleared for {player}.");
             messageConfigReloaded = getString(messages, "configReloaded", "Configuration reloaded.");
+            messageItemBlacklisted = getString(messages, "itemBlacklisted", "That item cannot be stored in vaults.");
         } else {
             loadDefaultMessages();
         }
@@ -140,6 +171,8 @@ public class ConfigManager {
     private void loadDefaults() {
         maxVaults = 9;
         slotsPerVault = 54;
+        blacklistedItems = new HashSet<>();
+        slotTiers = new LinkedHashMap<>();
         storageType = "json";
         storageDirectory = "playerdata";
         saveIntervalSeconds = 300;
@@ -154,6 +187,7 @@ public class ConfigManager {
         messageInvalidVault = "Invalid vault number.";
         messageVaultCleared = "Vault cleared for {player}.";
         messageConfigReloaded = "Configuration reloaded.";
+        messageItemBlacklisted = "That item cannot be stored in vaults.";
     }
 
     private int getInt(JsonObject obj, String key, int defaultValue) {
@@ -167,6 +201,9 @@ public class ConfigManager {
     // Getters for config values
     public int getMaxVaults() { return maxVaults; }
     public int getSlotsPerVault() { return slotsPerVault; }
+    public Set<String> getBlacklistedItems() { return Collections.unmodifiableSet(blacklistedItems); }
+    public boolean isBlacklisted(String itemId) { return blacklistedItems.contains(itemId); }
+    public Map<String, Integer> getSlotTiers() { return Collections.unmodifiableMap(slotTiers); }
     public String getStorageType() { return storageType; }
     public String getStorageDirectory() { return storageDirectory; }
     public int getSaveIntervalSeconds() { return saveIntervalSeconds; }
@@ -178,6 +215,7 @@ public class ConfigManager {
     public String getMessageVaultOpenedRaw() { return messageVaultOpened; }
     public String getMessageVaultClearedRaw() { return messageVaultCleared; }
     public String getMessageConfigReloadedRaw() { return messageConfigReloaded; }
+    public String getMessageItemBlacklistedRaw() { return messageItemBlacklisted; }
 
     public String formatMessage(String message, String... replacements) {
         String result = message;

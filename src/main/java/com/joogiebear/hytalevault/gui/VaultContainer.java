@@ -15,6 +15,7 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,6 +34,7 @@ public class VaultContainer extends ItemContainer {
     private short _capacity;
     private ItemStack[] _slots;
     private BiConsumer<Short, ItemStack> changeListener;
+    private Set<String> blacklist;
 
     public VaultContainer(short capacity) {
         this._capacity = capacity;
@@ -49,6 +51,14 @@ public class VaultContainer extends ItemContainer {
      */
     public void setChangeListener(BiConsumer<Short, ItemStack> listener) {
         this.changeListener = listener;
+    }
+
+    /**
+     * Set the item blacklist. Items with IDs in this set will be rejected.
+     * @param blacklist Set of item IDs that cannot be placed in this container
+     */
+    public void setBlacklist(Set<String> blacklist) {
+        this.blacklist = blacklist;
     }
 
     @Override
@@ -131,6 +141,9 @@ public class VaultContainer extends ItemContainer {
 
     @Override
     protected boolean cantAddToSlot(short slot, ItemStack itemStack, ItemStack slotItemStack) {
+        if (itemStack != null && blacklist != null && blacklist.contains(itemStack.getItemId())) {
+            return true;
+        }
         return false;
     }
 

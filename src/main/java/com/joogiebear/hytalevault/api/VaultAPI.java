@@ -92,7 +92,26 @@ public class VaultAPI {
         return HytaleVaultPlugin.getInstance().getConfigManager().getMaxVaults();
     }
 
+    /**
+     * Get the global maximum slots per vault (config value).
+     * For the actual slots a specific player gets, use getSlotsForPlayer().
+     */
     public int getSlotsPerVault() {
         return HytaleVaultPlugin.getInstance().getConfigManager().getSlotsPerVault();
+    }
+
+    /**
+     * Get the number of slots a player has based on their slot tier permissions.
+     * Returns the global slotsPerVault if no slot tiers are configured.
+     */
+    public int getSlotsForPlayer(Player player) {
+        return HytaleVaultPlugin.getInstance().getVaultManager().getSlotsForPlayer(player);
+    }
+
+    /**
+     * Check if an item is blacklisted from being stored in vaults.
+     */
+    public boolean isItemBlacklisted(String itemId) {
+        return HytaleVaultPlugin.getInstance().getConfigManager().isBlacklisted(itemId);
     }
 }

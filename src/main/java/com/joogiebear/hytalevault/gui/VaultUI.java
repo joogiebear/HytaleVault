@@ -50,9 +50,10 @@ public class VaultUI {
             return;
         }
 
-        // Get or create vault data (auto-create if player has permission)
-        int slotsPerVault = config.getSlotsPerVault();
-        VaultPage vaultData = vault.getOrCreateVault(vaultNumber, slotsPerVault);
+        // Get player's slot count based on permissions (or global default if no tiers)
+        int slotsPerVault = plugin.getVaultManager().getSlotsForPlayer(player);
+        // Always create/store vault with global max so items aren't lost on downgrades
+        VaultPage vaultData = vault.getOrCreateVault(vaultNumber, config.getSlotsPerVault());
         if (vaultData == null) {
             playerRef.sendMessage(MessageUtil.error(config.getMessageInvalidVaultRaw()));
             return;
@@ -63,10 +64,11 @@ public class VaultUI {
             syncAndRemoveSession(playerRef.getUuid());
         }
 
-        // Create container with all slots as storage
+        // Create container with player's permitted slot count
         VaultContainer container = new VaultContainer((short) slotsPerVault);
+        container.setBlacklist(config.getBlacklistedItems());
 
-        // Load items from vault into container
+        // Load items from vault into container (only within permitted slot range)
         Map<Integer, ItemStack> items = vaultData.getItems();
         for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
             int slot = entry.getKey();
@@ -77,6 +79,7 @@ public class VaultUI {
         }
 
         // Set up real-time sync listener AFTER loading initial items
+        // Saves immediately to disk on every change to prevent data loss
         container.setChangeListener((slot, item) -> {
             // Sync this slot change directly to vault data
             if (item == null || item.isEmpty()) {
@@ -85,6 +88,8 @@ public class VaultUI {
                 vaultData.setItem(slot, item);
             }
             vault.markDirty();
+            // Save to disk immediately (async)
+            plugin.getVaultManager().saveVault(vault);
         });
 
         // Wrap in ContainerWindow and open via PageManager
